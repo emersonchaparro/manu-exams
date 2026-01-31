@@ -37,7 +37,7 @@ function App() {
 
   // Cargar el archivo CSV
   useEffect(() => {
-    fetch('./src/assets/training.csv')
+    fetch('./assets/training.csv')
       .then((response) => response.text())
       .then((text) => {
         Papa.parse<CSVRow>(text, {
