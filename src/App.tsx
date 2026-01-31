@@ -34,24 +34,48 @@ function App() {
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([])
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([])
   const [isFinished, setIsFinished] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Cargar el archivo CSV
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}training.csv`)
-      .then((response) => response.text())
+    const csvUrl = `${import.meta.env.BASE_URL}training.csv`
+    console.log('Intentando cargar CSV desde:', csvUrl)
+    
+    fetch(csvUrl)
+      .then((response) => {
+        console.log('Response status:', response.status)
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`)
+        }
+        return response.text()
+      })
       .then((text) => {
+        console.log('CSV cargado, longitud:', text.length)
         Papa.parse<CSVRow>(text, {
           header: true,
           skipEmptyLines: true,
           complete: (result) => {
+            console.log('Datos parseados:', result.data.length, 'filas')
             setCsvData(result.data)
             // Obtener capítulos únicos
             const uniqueChapters = Array.from(
               new Set(result.data.map((row) => row.capitulo))
             ).sort()
             setChapters(uniqueChapters)
+            setLoading(false)
           },
+          error: (error: Error) => {
+            console.error('Error al parsear CSV:', error)
+            setError(`Error al parsear CSV: ${error.message}`)
+            setLoading(false)
+          }
         })
+      })
+      .catch((err) => {
+        console.error('Error al cargar CSV:', err)
+        setError(`Error al cargar el archivo: ${err.message}`)
+        setLoading(false)
       })
   }, [])
 
@@ -146,8 +170,24 @@ function App() {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Generador de Exámenes</h1>
       
+      {/* Mostrar estado de carga */}
+      {loading && (
+        <div className="text-center py-8">
+          <p className="text-lg">Cargando preguntas...</p>
+        </div>
+      )}
+      
+      {/* Mostrar error si existe */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-4">
+          <p className="font-semibold">Error:</p>
+          <p>{error}</p>
+          <p className="text-sm mt-2">URL intentada: {import.meta.env.BASE_URL}training.csv</p>
+        </div>
+      )}
+      
       {/* Paso 1: Selección de capítulos */}
-      {generatedQuestions.length === 0 && (
+      {!loading && !error && generatedQuestions.length === 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">1. Selecciona los capítulos:</h2>
           <div className="grid grid-cols-4 gap-2 mb-6">
