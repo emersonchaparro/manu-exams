@@ -109,6 +109,7 @@ function App() {
           { key: 'b', text: row.b },
           { key: 'c', text: row.c },
           { key: 'd', text: row.d },
+          { key: 'e', text: row.e },
         ].filter((opcion) => opcion.text && opcion.text.trim() !== '')
         
         questions.push({
